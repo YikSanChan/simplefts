@@ -2,9 +2,12 @@ package main
 
 import (
 	"compress/gzip"
+	"encoding/gob"
 	"encoding/xml"
 	"os"
 )
+
+const DOCS = "docs.gob"
 
 // document represents a Wikipedia abstract dump document.
 type document struct {
@@ -37,6 +40,32 @@ func loadDocuments(path string) ([]document, error) {
 	docs := dump.Documents
 	for i := range docs {
 		docs[i].ID = i
+	}
+	return docs, nil
+}
+
+func saveDocs(docs []document) error {
+	file, err := os.Create(DOCS)
+	if err != nil {
+		return err
+	}
+	enc := gob.NewEncoder(file)
+
+	if err = enc.Encode(docs); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadDocs() ([]document, error) {
+	var docs []document
+	file, err := os.Open(DOCS)
+	if err != nil {
+		return nil, err
+	}
+	dec := gob.NewDecoder(file)
+	if err = dec.Decode(&docs); err != nil {
+		return nil, err
 	}
 	return docs, nil
 }

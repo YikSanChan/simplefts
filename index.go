@@ -1,7 +1,14 @@
 package main
 
+import (
+	"encoding/gob"
+	"os"
+)
+
 // index is an inverted index. It maps tokens to document IDs.
 type index map[string][]int
+
+const SEARCH_INDEX = "index.gob"
 
 // add adds documents to the index.
 func (idx index) add(docs []document) {
@@ -15,6 +22,32 @@ func (idx index) add(docs []document) {
 			idx[token] = append(ids, doc.ID)
 		}
 	}
+}
+
+func saveIndex(idx index) error {
+	file, err := os.Create(SEARCH_INDEX)
+	if err != nil {
+		return err
+	}
+	enc := gob.NewEncoder(file)
+
+	if err = enc.Encode(idx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadIndex() (index, error) {
+	var idx index
+	file, err := os.Open(SEARCH_INDEX)
+	if err != nil {
+		return nil, err
+	}
+	dec := gob.NewDecoder(file)
+	if err = dec.Decode(&idx); err != nil {
+		return nil, err
+	}
+	return idx, nil
 }
 
 // intersection returns the set intersection between a and b.
